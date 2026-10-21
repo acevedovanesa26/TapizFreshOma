@@ -8,7 +8,14 @@ interface HeroProps {
 }
 
 export const Hero: React.FC<HeroProps> = ({ onCotizarClick }) => {
-  const config = storage.getConfig();
+  const [config, setConfig] = React.useState(storage.getConfig());
+
+  React.useEffect(() => {
+    return storage.subscribe(() => {
+      setConfig(storage.getConfig());
+    });
+  }, []);
+
   const heroImage =
     config.fotoHeroPrincipal ||
     'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80';

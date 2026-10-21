@@ -3,7 +3,14 @@ import { Sparkles, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { storage } from '../../services/storage';
 
 export const WorkCarousel: React.FC = () => {
-  const config = storage.getConfig();
+  const [config, setConfig] = useState(storage.getConfig());
+
+  React.useEffect(() => {
+    return storage.subscribe(() => {
+      setConfig(storage.getConfig());
+    });
+  }, []);
+
   const items = config.carrusel || [];
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAfter, setShowAfter] = useState<Record<number, boolean>>({});

@@ -15,13 +15,24 @@ export function saveBrevoApiKey(key: string): void {
   }
 }
 
-const BREVO_SENDER = {
-  name: 'Tapiz Fresh Bogotá',
-  email: 'tapizoma2026@gmail.com',
-};
+// Get Brevo Sender Email (the email address authorized in Brevo)
+export function getBrevoSenderEmail(): string {
+  if (typeof window !== 'undefined') {
+    const local = localStorage.getItem('tapiz_brevo_sender_email');
+    if (local && local.trim().includes('@')) return local.trim();
+  }
+  return import.meta.env.VITE_BREVO_SENDER_EMAIL || 'tapizoma2026@gmail.com';
+}
+
+export function saveBrevoSenderEmail(email: string): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('tapiz_brevo_sender_email', email.trim());
+  }
+}
 
 /**
- * Sends a transactional email directly via Brevo REST API v3
+ * Sends a transactional email through the backend proxy /api/send-email
+ * (prevents browser CORS errors when talking to Brevo)
  */
 async function sendViaBrevoApi(payload: {
   toEmail: string;
@@ -30,49 +41,96 @@ async function sendViaBrevoApi(payload: {
   htmlContent: string;
 }): Promise<{ success: boolean; error?: string }> {
   const apiKey = getBrevoApiKey();
-
-  if (!apiKey) {
-    console.warn('Brevo API key not configured. Email logged to console in dev mode.');
-    return {
-      success: false,
-      error: 'Clave de Brevo no configurada en Ajustes.',
-    };
-  }
+  const senderEmail = getBrevoSenderEmail();
 
   try {
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    const response = await fetch('/api/send-email', {
       method: 'POST',
       headers: {
-        'accept': 'application/json',
-        'api-key': apiKey,
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        sender: BREVO_SENDER,
-        to: [{ email: payload.toEmail, name: payload.toName || payload.toEmail }],
+        toEmail: payload.toEmail,
+        toName: payload.toName || payload.toEmail,
         subject: payload.subject,
         htmlContent: payload.htmlContent,
+        apiKey: apiKey || undefined,
+        senderEmail,
+        senderName: 'Tapiz Fresh Bogotá',
       }),
     });
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      const msg = errData?.message || `Error Brevo: ${response.status} ${response.statusText}`;
-      console.error('Brevo API Error:', msg);
-      return { success: false, error: msg };
+      console.warn('Backend send-email error:', data);
+      return {
+        success: false,
+        error: data.error || 'Error al conectar con el servicio de correo.',
+      };
     }
 
     return { success: true };
   } catch (err: any) {
-    console.error('Error enviando correo con Brevo:', err);
-    return { success: false, error: err.message || 'Error de conexión' };
+    console.warn('Error llamando /api/send-email:', err);
+    return {
+      success: false,
+      error: err.message || 'Error de red al enviar correo.',
+    };
   }
 }
 
 /**
- * Sends 6-digit OTP code to the administrator
+ * Tests sending a sample email to verify Brevo credentials directly
  */
-export async function sendOtpEmail(toEmail: string, code: string): Promise<{ success: boolean; message: string }> {
+export async function testBrevoConnection(
+  targetEmail: string
+): Promise<{ success: boolean; message: string }> {
+  const apiKey = getBrevoApiKey();
+  const senderEmail = getBrevoSenderEmail();
+
+  try {
+    const response = await fetch('/api/test-email', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        apiKey,
+        targetEmail,
+        senderEmail,
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.error || 'Error de verificación con Brevo.',
+      };
+    }
+
+    return {
+      success: true,
+      message: data.message || `¡Correo de prueba enviado con éxito a ${targetEmail}!`,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err.message || 'Error de conexión con el servidor.',
+    };
+  }
+}
+
+/**
+ * Sends 6-digit OTP code to the administrator.
+ * Never outputs sensitive configuration errors or codes to the public interface.
+ */
+export async function sendOtpEmail(
+  toEmail: string,
+  code: string
+): Promise<{ success: boolean; message: string }> {
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px;">
       <div style="text-align: center; margin-bottom: 24px;">
@@ -89,22 +147,22 @@ export async function sendOtpEmail(toEmail: string, code: string): Promise<{ suc
       </div>
       <p style="color: #64748b; font-size: 12px; text-align: center; line-height: 1.5;">
         ⏱️ Este código vence en <strong>10 minutos</strong>.<br/>
-        Si no solicitaste este código, puedes ignorar este correo de forma segura.
+        Por seguridad, nunca compartas este código con nadie.
       </p>
       <div style="border-top: 1px solid #f1f5f9; margin-top: 28px; padding-top: 16px; text-align: center;">
-        <p style="color: #94a3b8; font-size: 11px; margin: 0;">© 2026 Tapiz Fresh • Lavado de Muebles a Domicilio en Bogotá</p>
+        <p style="color: #94a3b8; font-size: 11px; margin: 0;">© 2026 Tapiz Fresh • Lavado Profesional de Muebles a Domicilio en Bogotá</p>
       </div>
     </div>
   `;
 
-  // 1. Try Brevo direct API
-  const brevoRes = await sendViaBrevoApi({
+  // 1. Try Brevo via backend proxy
+  sendViaBrevoApi({
     toEmail,
     subject: `Tu código de acceso a Tapiz Fresh Bogotá: ${code}`,
     htmlContent: html,
-  });
+  }).catch((e) => console.warn('Brevo send background notice:', e));
 
-  // 2. Also try Supabase Auth OTP if configured
+  // 2. Also trigger Supabase Auth OTP if configured
   if (isSupabaseConfigured() && supabase) {
     try {
       await supabase.auth.signInWithOtp({
@@ -115,17 +173,10 @@ export async function sendOtpEmail(toEmail: string, code: string): Promise<{ suc
     }
   }
 
-  if (brevoRes.success) {
-    return {
-      success: true,
-      message: `Código enviado con éxito a ${toEmail}. Revisa tu bandeja de entrada o spam.`,
-    };
-  }
-
-  // If Brevo key not yet configured, provide informative feedback
+  // Uniform, confidential message: never expose internal keys, debug state, or codes on UI
   return {
     success: true,
-    message: `Hemos procesado el código para ${toEmail}. Si configuraste Brevo en Configuración, llegará a tu bandeja en segundos.`,
+    message: 'Se ha enviado un código de acceso de 6 dígitos a tu correo registrado. Revisa tu bandeja de entrada o la carpeta de spam.',
   };
 }
 
@@ -143,55 +194,85 @@ export async function sendLeadNotificationToOmaira(lead: {
   fotos?: string[];
   notas?: string;
 }): Promise<void> {
-  const photosHtml = lead.fotos && lead.fotos.length > 0
-    ? `
+  const photosHtml =
+    lead.fotos && lead.fotos.length > 0
+      ? `
       <div style="margin-top: 16px;">
-        <strong style="color: #1e293b; font-size: 13px;">Fotos adjuntas del cliente (${lead.fotos.length}):</strong>
+        <strong style="color: #1e293b; font-size: 13px;">Fotos adjuntas del mueble (${lead.fotos.length}):</strong>
         <div style="margin-top: 8px;">
           ${lead.fotos
             .map(
               (f, i) =>
-                `<a href="${f}" target="_blank" style="display: inline-block; margin-right: 8px; margin-bottom: 8px;"><img src="${f}" style="width: 90px; height: 90px; object-fit: cover; border-radius: 10px; border: 1px solid #cbd5e1;" alt="Foto ${i + 1}" /></a>`
+                `<a href="${f}" target="_blank" style="display: inline-block; margin-right: 8px; margin-bottom: 8px; color: #4F9DA6; font-size: 12px; font-weight: bold; text-decoration: underline;">Ver Foto #${i + 1}</a>`
             )
-            .join('')}
+            .join(' • ')}
         </div>
       </div>
     `
-    : '';
+      : '';
 
   const html = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px;">
-      <div style="text-align: center; margin-bottom: 20px;">
-        <span style="background: #EBF7F8; color: #2F6F77; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; text-transform: uppercase;">¡Nueva Solicitud en Bogotá!</span>
-        <h2 style="color: #1e293b; font-size: 20px; font-weight: 800; margin: 10px 0 0 0;">Nueva Cotización Recibida</h2>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px;">
+      <div style="background: #EBF7F8; padding: 14px 18px; border-radius: 12px; margin-bottom: 20px;">
+        <h2 style="color: #2F6F77; font-size: 18px; margin: 0; font-weight: 800;">
+          🫧 ¡Nueva Solicitud de Cotización en Bogotá!
+        </h2>
+        <p style="color: #4F9DA6; font-size: 12px; margin: 4px 0 0 0;">
+          Recibida a través del sitio web de Tapiz Fresh
+        </p>
       </div>
 
-      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-bottom: 20px; font-size: 13px; line-height: 1.6; color: #334155;">
-        <p style="margin: 0 0 8px 0;"><strong>👤 Cliente:</strong> ${lead.nombre}</p>
-        <p style="margin: 0 0 8px 0;"><strong>📞 Teléfono / WhatsApp:</strong> <a href="https://wa.me/57${lead.telefono.replace(/\D/g, '')}" style="color: #059669; font-weight: bold; text-decoration: none;">${lead.telefono}</a></p>
-        <p style="margin: 0 0 8px 0;"><strong>📍 Ubicación:</strong> ${lead.direccion}, Barrio ${lead.barrio} (Bogotá)</p>
-        <p style="margin: 0 0 8px 0;"><strong>🛋️ Muebles a lavar:</strong> ${lead.muebles}</p>
-        ${lead.correo ? `<p style="margin: 0 0 8px 0;"><strong>✉️ Correo:</strong> ${lead.correo}</p>` : ''}
-        ${lead.notas ? `<p style="margin: 0 0 8px 0;"><strong>📝 Notas del cliente:</strong> ${lead.notas}</p>` : ''}
-        ${photosHtml}
-      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-weight: 600; width: 35%;">Cliente:</td>
+          <td style="padding: 8px 0; color: #0f172a; font-weight: 700;">${lead.nombre}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-weight: 600;">Teléfono:</td>
+          <td style="padding: 8px 0; color: #0f172a; font-weight: 700;">
+            <a href="tel:${lead.telefono}" style="color: #4F9DA6; text-decoration: none;">${lead.telefono}</a> 
+            (<a href="https://wa.me/57${lead.telefono.replace(/\D/g, '')}" target="_blank" style="color: #10B981; font-weight: bold;">WhatsApp</a>)
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-weight: 600;">Barrio:</td>
+          <td style="padding: 8px 0; color: #0f172a; font-weight: 700;">${lead.barrio} (Bogotá)</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-weight: 600;">Dirección:</td>
+          <td style="padding: 8px 0; color: #0f172a;">${lead.direccion}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-weight: 600;">Muebles:</td>
+          <td style="padding: 8px 0; color: #0f172a; font-weight: 700;">${lead.muebles}</td>
+        </tr>
+        ${
+          lead.notas
+            ? `
+        <tr>
+          <td style="padding: 8px 0; color: #64748b; font-weight: 600;">Notas:</td>
+          <td style="padding: 8px 0; color: #0f172a;">${lead.notas}</td>
+        </tr>
+        `
+            : ''
+        }
+      </table>
 
-      <div style="text-align: center;">
-        <a href="https://wa.me/57${lead.telefono.replace(/\D/g, '')}?text=Hola%20${encodeURIComponent(lead.nombre)},%20te%20saluda%20Omaira%20de%20Tapiz%20Fresh%20en%20Bogot%C3%A1.%20Recib%C3%AD%20tu%20solicitud%20para%20${encodeURIComponent(lead.muebles)}" style="display: inline-block; background-color: #10b981; color: #ffffff; font-weight: bold; font-size: 14px; padding: 12px 24px; border-radius: 12px; text-decoration: none;">
-          Responder por WhatsApp al Cliente
+      ${photosHtml}
+
+      <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #f1f5f9; text-align: center;">
+        <a href="https://wa.me/57${lead.telefono.replace(/\D/g, '')}" target="_blank" style="display: inline-block; background: #10B981; color: #ffffff; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 800; font-size: 13px;">
+          Abrir Chat de WhatsApp con el Cliente
         </a>
-      </div>
-
-      <div style="border-top: 1px solid #f1f5f9; margin-top: 24px; padding-top: 14px; text-align: center;">
-        <p style="color: #94a3b8; font-size: 11px; margin: 0;">Tapiz Fresh CRM • tapizoma2026@gmail.com</p>
       </div>
     </div>
   `;
 
-  await sendViaBrevoApi({
+  // Send to Omaira's email
+  sendViaBrevoApi({
     toEmail: 'tapizoma2026@gmail.com',
     toName: 'Omaira Motato',
-    subject: `🔔 Nueva solicitud de ${lead.nombre} (${lead.barrio}, Bogotá)`,
+    subject: `🫧 Nueva Solicitud en Bogotá: ${lead.nombre} (${lead.barrio})`,
     htmlContent: html,
-  });
+  }).catch((e) => console.warn('Lead notification notice:', e));
 }

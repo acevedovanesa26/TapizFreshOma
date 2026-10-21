@@ -21,10 +21,22 @@ const STORAGE_KEYS = {
   TASKS: 'tapiz_fresh_tasks_v1',
 };
 
+// Generates valid RFC4122 v4 UUIDs for PostgreSQL compatibility
+export function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // Initial Default Administrator
 const INITIAL_ADMINS: Administrador[] = [
   {
-    id: 'a001-omaira-owner',
+    id: '11111111-2222-4333-8444-555555555555',
     correo: 'tapizoma2026@gmail.com',
     nombre: 'Omaira Motato',
     rol: 'propietaria',
@@ -48,6 +60,15 @@ const INITIAL_CONFIG: ConfiguracionApp = {
     horaInicio: '08:00',
     horaFin: '18:00',
     duracionEstimadaMinutos: 120,
+  },
+  fotoHeroPrincipal: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80',
+  fotosMuebles: {
+    'sofa-l': 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=400&q=80',
+    'sofa-3': 'https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=400&q=80',
+    'sofa-2': 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80',
+    'colchon-king': 'https://images.unsplash.com/photo-1540518614846-7ede433c4ef5?auto=format&fit=crop&w=400&q=80',
+    'colchon-doble': 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=400&q=80',
+    'sillas-comedor': 'https://images.unsplash.com/photo-1580481077195-c3a821a58875?auto=format&fit=crop&w=400&q=80',
   },
   servicios: [
     {
@@ -110,7 +131,7 @@ const INITIAL_CONFIG: ConfiguracionApp = {
     {
       id: 'c-2',
       titulo: 'Desinfección Profunda Colchón King',
-      descripcion: 'Tratamiento anti-ácaros a 90°C con neutralización de olores de mascota.',
+      descripcion: 'Tratamiento a fondo con neutralización de suciedad y olores en Bogotá.',
       fotoAntes: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=600&q=80',
       fotoDespues: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=600&q=80',
       categoria: 'Colchones',
@@ -118,91 +139,67 @@ const INITIAL_CONFIG: ConfiguracionApp = {
     {
       id: 'c-3',
       titulo: 'Sillas de Comedor en Terciopelo',
-      descripcion: 'Desengrasado textil y aplicación de película impermeabilizante nano-repelente.',
+      descripcion: 'Lavado especializado con inyección suave para no dañar las fibras delicadas.',
       fotoAntes: 'https://images.unsplash.com/photo-1580481077195-c3a821a58875?auto=format&fit=crop&w=600&q=80',
-      fotoDespues: 'https://images.unsplash.com/photo-1519947486513-ce62b99f2162?auto=format&fit=crop&w=600&q=80',
-      categoria: 'Sillas Comedor',
+      fotoDespues: 'https://images.unsplash.com/photo-1550581190-9c1c48d21d6c?auto=format&fit=crop&w=600&q=80',
+      categoria: 'Comedores',
     },
   ],
-  fotoEquipo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
-  smtpBrevoConfig: {
-    host: 'smtp-relay.brevo.com',
-    port: 587,
-    senderEmail: 'tapizoma2026@gmail.com',
-    senderName: 'Tapiz Fresh - Omaira Motato',
-    isConfigured: true,
-  },
 };
 
-// Seed Clients
+// Initial Realistic CRM Seed Clients (Strictly Bogotá)
 const INITIAL_CLIENTS: Cliente[] = [
   {
-    id: 'cli-001',
-    nombre: 'Carolina Restrepo',
-    telefono: '3157894120',
-    correo: 'carolina.restrepo@example.com',
+    id: 'a1b2c3d4-0001-4000-8000-000000000001',
+    nombre: 'Carolina Restrepo Vargas',
+    telefono: '3157892341',
+    correo: 'carolina.restrepo@gmail.com',
     direccion: 'Calle 140 # 15-22, Apto 502',
     barrio: 'Cedritos',
     ciudad: 'Bogotá',
-    origen: 'Instagram',
-    notas: 'Tiene 2 perros de raza pequeña. Priorizar desodorización y producto hipoalergénico.',
-    etiquetas: ['Mascotas', 'VIP', 'Recurrente'],
+    origen: 'WhatsApp',
+    notas: 'Tiene un gato persa blanco. Pidió especial cuidado con pelos.',
+    etiquetas: ['Mascotas', 'Cliente Frecuente', 'Cedritos'],
     estado: 'agendado',
-    creado_en: '2026-10-18T14:30:00.000Z',
-    actualizado_en: '2026-10-19T09:15:00.000Z',
+    creado_en: '2026-10-18T14:32:00.000Z',
+    actualizado_en: '2026-10-18T14:32:00.000Z',
   },
   {
-    id: 'cli-002',
+    id: 'a1b2c3d4-0002-4000-8000-000000000002',
     nombre: 'Andrés Felipe Morales',
     telefono: '3206541892',
-    correo: 'andres.felipe.m@example.com',
+    correo: 'andres.morales@outlook.com',
     direccion: 'Carrera 7 # 120-45',
     barrio: 'Usaquén',
     ciudad: 'Bogotá',
-    origen: 'WhatsApp',
-    notas: 'Sofá en L con mancha de vino tinto reciente.',
-    etiquetas: ['Mancha difícil', 'Urgente'],
+    origen: 'Instagram',
+    notas: 'Sofá en L manchado con vino tinto en la esquina izquierda.',
+    etiquetas: ['Desmanchado', 'Sofá en L'],
     estado: 'cotizado',
-    creado_en: '2026-10-19T11:20:00.000Z',
-    actualizado_en: '2026-10-19T11:20:00.000Z',
+    creado_en: '2026-10-19T09:15:00.000Z',
+    actualizado_en: '2026-10-19T09:15:00.000Z',
   },
   {
-    id: 'cli-003',
+    id: 'a1b2c3d4-0003-4000-8000-000000000003',
     nombre: 'Mariana Gómez Lozano',
     telefono: '3109873421',
-    correo: 'mariana.gomez@example.com',
-    direccion: 'Transversal 38 # 128-10',
+    correo: 'mariana.gomez@hotmail.com',
+    direccion: 'Transversal 54 # 134-20',
     barrio: 'Colina Campestre',
     ciudad: 'Bogotá',
     origen: 'Recomendación',
-    notas: 'Recomendada por la Sra. Beatriz. Quiere lavado de colchón King y 4 sillas.',
-    etiquetas: ['Referido'],
+    notas: 'Quiere lavar colchón king y 4 sillas de comedor.',
+    etiquetas: ['Colchón King', 'Comedor'],
     estado: 'nuevo',
     creado_en: '2026-10-20T08:10:00.000Z',
     actualizado_en: '2026-10-20T08:10:00.000Z',
   },
-  {
-    id: 'cli-004',
-    nombre: 'Carlos Eduardo Peña',
-    telefono: '3182349081',
-    correo: 'carlos.pena@example.com',
-    direccion: 'Calle 80 # 68D-12',
-    barrio: 'Pontevedra',
-    ciudad: 'Bogotá',
-    origen: 'Facebook',
-    notas: 'Servicio realizado con éxito. Pidió recordatorio para dentro de 6 meses.',
-    etiquetas: ['Satisfecho', 'Recordatorio 6M'],
-    estado: 'realizado',
-    creado_en: '2026-10-12T10:00:00.000Z',
-    actualizado_en: '2026-10-15T16:00:00.000Z',
-  },
 ];
 
-// Seed Quotes
 const INITIAL_QUOTES: Cotizacion[] = [
   {
-    id: 'cot-001',
-    cliente_id: 'cli-003',
+    id: 'b1b2c3d4-0001-4000-8000-000000000001',
+    cliente_id: 'a1b2c3d4-0003-4000-8000-000000000003',
     cliente_nombre: 'Mariana Gómez Lozano',
     cliente_telefono: '3109873421',
     cliente_barrio: 'Colina Campestre',
@@ -210,11 +207,11 @@ const INITIAL_QUOTES: Cotizacion[] = [
     items: [
       {
         id: 'it-1',
-        mueble: 'Colchón King Size Sanitizado',
+        mueble: 'Colchón King Size',
         cantidad: 1,
         precioUnitario: 190000,
         subtotal: 190000,
-        detalles: 'Ambas caras y desinfección a vapor',
+        detalles: 'Ambas caras y desinfección profunda',
       },
       {
         id: 'it-2',
@@ -235,42 +232,15 @@ const INITIAL_QUOTES: Cotizacion[] = [
     creado_en: '2026-10-20T08:10:00.000Z',
     es_nuevo: true,
   },
-  {
-    id: 'cot-002',
-    cliente_id: 'cli-002',
-    cliente_nombre: 'Andrés Felipe Morales',
-    cliente_telefono: '3206541892',
-    cliente_barrio: 'Usaquén',
-    cliente_ciudad: 'Bogotá',
-    items: [
-      {
-        id: 'it-3',
-        mueble: 'Sofá en L / Seccional (4 módulos)',
-        cantidad: 1,
-        precioUnitario: 240000,
-        subtotal: 240000,
-        detalles: 'Tratamiento especial mancha de vino',
-      },
-    ],
-    valor_cotizado: 240000,
-    estado: 'pendiente',
-    notas_internas: 'Se le ofreció aplicar Scotchgard por $70.000 adicionales.',
-    fotos: [
-      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80',
-    ],
-    creado_en: '2026-10-19T11:20:00.000Z',
-    es_nuevo: false,
-  },
 ];
 
-// Helper to get local date ISO strings relative to today
 const today = new Date();
 const todayYMD = today.toISOString().substring(0, 10);
 
 const INITIAL_APPOINTMENTS: Cita[] = [
   {
-    id: 'cit-001',
-    cliente_id: 'cli-001',
+    id: 'c1b2c3d4-0001-4000-8000-000000000001',
+    cliente_id: 'a1b2c3d4-0001-4000-8000-000000000001',
     titulo: 'Lavado Sofá 3 Puestos + Cojines',
     servicio: 'Lavado Profundo con Extracción de Olores',
     direccion: 'Calle 140 # 15-22, Apto 502',
@@ -280,43 +250,19 @@ const INITIAL_APPOINTMENTS: Cita[] = [
     fecha_fin: `${todayYMD}T12:00:00`,
     estado: 'confirmada',
     valor: 160000,
-    notas: 'Llevar máquina Kärcher de extracción y químico bactericida para pelos de mascota.',
+    notas: 'Llevar máquina de extracción y producto para pelos de mascota.',
     recordatorio_enviado: true,
     creado_en: '2026-10-18T16:00:00.000Z',
-  },
-  {
-    id: 'cit-002',
-    cliente_id: 'cli-002',
-    titulo: 'Evaluación y Desmanchado Sofá en L',
-    servicio: 'Desmanchado Textil a Domicilio',
-    direccion: 'Carrera 7 # 120-45',
-    barrio: 'Usaquén',
-    ciudad: 'Bogotá',
-    fecha_inicio: `${todayYMD}T14:30:00`,
-    fecha_fin: `${todayYMD}T16:30:00`,
-    estado: 'pendiente',
-    valor: 240000,
-    notas: 'Pedir que no toquen la mancha con cloro.',
-    recordatorio_enviado: false,
-    creado_en: '2026-10-19T12:00:00.000Z',
   },
 ];
 
 const INITIAL_FOLLOWUPS: Seguimiento[] = [
   {
-    id: 'seg-001',
-    cliente_id: 'cli-001',
+    id: 'd1b2c3d4-0001-4000-8000-000000000001',
+    cliente_id: 'a1b2c3d4-0001-4000-8000-000000000001',
     tipo: 'WhatsApp',
     nota: 'Se envió confirmación de visita con recordatorio de despejar área.',
     fecha: '2026-10-19T15:00:00.000Z',
-    creado_por: 'Omaira Motato',
-  },
-  {
-    id: 'seg-002',
-    cliente_id: 'cli-003',
-    tipo: 'llamada',
-    nota: 'Llamó preguntando por tiempos de secado (aproximadamente 3 a 4 horas).',
-    fecha: '2026-10-20T08:30:00.000Z',
     creado_por: 'Omaira Motato',
   },
 ];
@@ -329,7 +275,7 @@ const INITIAL_TASKS: TareaHoy[] = [
     tipo: 'cita',
     completada: false,
     hora: '10:00 AM',
-    cliente_id: 'cli-001',
+    cliente_id: 'a1b2c3d4-0001-4000-8000-000000000001',
     cliente_nombre: 'Carolina Restrepo',
   },
   {
@@ -339,26 +285,8 @@ const INITIAL_TASKS: TareaHoy[] = [
     tipo: 'cotizacion',
     completada: false,
     hora: 'Antes de mediodía',
-    cliente_id: 'cli-003',
+    cliente_id: 'a1b2c3d4-0003-4000-8000-000000000003',
     cliente_nombre: 'Mariana Gómez',
-  },
-  {
-    id: 't-3',
-    titulo: 'Visita programada: Andrés Morales (Usaquén)',
-    detalle: 'Desmanchado sofá en L - 02:30 PM',
-    tipo: 'cita',
-    completada: false,
-    hora: '02:30 PM',
-    cliente_id: 'cli-002',
-    cliente_nombre: 'Andrés Felipe Morales',
-  },
-  {
-    id: 't-4',
-    titulo: 'Enviar recordatorio WhatsApp para citas de mañana',
-    detalle: 'Revisar agenda del día siguiente y enviar plantilla de 24h',
-    tipo: 'seguimiento',
-    completada: false,
-    hora: '05:00 PM',
   },
 ];
 
@@ -370,49 +298,18 @@ const INITIAL_NOTIFICATIONS: NotificacionSistema[] = [
     tipo: 'solicitud',
     leida: false,
     fecha: '2026-10-20T08:10:00.000Z',
-    cliente_id: 'cli-003',
+    cliente_id: 'a1b2c3d4-0003-4000-8000-000000000003',
   },
 ];
 
 class StorageService {
   private listeners: (() => void)[] = [];
+  private realtimeChannel: any = null;
 
   constructor() {
     this.ensureInitialized();
     this.syncFromSupabase();
-  }
-
-  public async syncFromSupabase(): Promise<void> {
-    if (!isSupabaseConfigured() || !supabase) return;
-    try {
-      const { data: dbClientes, error } = await supabase.from('clientes').select('*');
-      if (dbClientes && dbClientes.length > 0 && !error) {
-        const local = this.getClientes();
-        const map = new Map<string, Cliente>();
-        local.forEach((c) => map.set(c.id, c));
-        dbClientes.forEach((dbC: any) => {
-          map.set(dbC.id, {
-            id: dbC.id,
-            nombre: dbC.nombre,
-            telefono: dbC.telefono,
-            correo: dbC.correo,
-            direccion: dbC.direccion,
-            barrio: dbC.barrio,
-            ciudad: dbC.ciudad || 'Bogotá',
-            origen: dbC.origen || 'WhatsApp',
-            notas: dbC.notas || '',
-            etiquetas: dbC.etiquetas || [],
-            estado: dbC.estado || 'nuevo',
-            creado_en: dbC.creado_en || new Date().toISOString(),
-            actualizado_en: dbC.actualizado_en || new Date().toISOString(),
-          });
-        });
-        localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(Array.from(map.values())));
-        this.notify();
-      }
-    } catch (e) {
-      console.warn('Supabase sync notice:', e);
-    }
+    this.initRealtime();
   }
 
   private ensureInitialized(): void {
@@ -441,6 +338,116 @@ class StorageService {
     }
     if (!localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS)) {
       localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(INITIAL_NOTIFICATIONS));
+    }
+  }
+
+  private initRealtime(): void {
+    if (!isSupabaseConfigured() || !supabase) return;
+    try {
+      if (this.realtimeChannel) return;
+      this.realtimeChannel = supabase
+        .channel('tapiz_live_sync')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'clientes' }, () => {
+          this.syncFromSupabase();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'cotizaciones' }, () => {
+          this.syncFromSupabase();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'citas' }, () => {
+          this.syncFromSupabase();
+        })
+        .subscribe();
+    } catch (e) {
+      console.warn('Realtime init notice:', e);
+    }
+  }
+
+  public async syncFromSupabase(): Promise<void> {
+    if (!isSupabaseConfigured() || !supabase) return;
+    try {
+      // 1. Sync Clientes
+      const { data: dbClientes, error: errC } = await supabase.from('clientes').select('*');
+      if (dbClientes && dbClientes.length > 0 && !errC) {
+        const local = this.getClientes();
+        const map = new Map<string, Cliente>();
+        local.forEach((c) => map.set(c.id, c));
+        dbClientes.forEach((dbC: any) => {
+          map.set(dbC.id, {
+            id: dbC.id,
+            nombre: dbC.nombre,
+            telefono: dbC.telefono,
+            correo: dbC.correo || '',
+            direccion: dbC.direccion,
+            barrio: dbC.barrio,
+            ciudad: dbC.ciudad || 'Bogotá',
+            origen: dbC.origen || 'WhatsApp',
+            notas: dbC.notas || '',
+            etiquetas: dbC.etiquetas || [],
+            estado: dbC.estado || 'nuevo',
+            creado_en: dbC.creado_en || new Date().toISOString(),
+            actualizado_en: dbC.actualizado_en || new Date().toISOString(),
+          });
+        });
+        localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(Array.from(map.values())));
+      }
+
+      // 2. Sync Cotizaciones
+      const { data: dbQuotes, error: errQ } = await supabase.from('cotizaciones').select('*');
+      if (dbQuotes && dbQuotes.length > 0 && !errQ) {
+        const localQuotes = this.getCotizaciones();
+        const qMap = new Map<string, Cotizacion>();
+        localQuotes.forEach((q) => qMap.set(q.id, q));
+        dbQuotes.forEach((dq: any) => {
+          const client = this.getClienteById(dq.cliente_id);
+          qMap.set(dq.id, {
+            id: dq.id,
+            cliente_id: dq.cliente_id,
+            cliente_nombre: client ? client.nombre : 'Cliente Web',
+            cliente_telefono: client ? client.telefono : '',
+            cliente_barrio: client ? client.barrio : 'Bogotá',
+            cliente_ciudad: client ? client.ciudad : 'Bogotá',
+            items: dq.items || [],
+            valor_cotizado: Number(dq.valor_cotizado || 0),
+            estado: dq.estado || 'pendiente',
+            notas_internas: dq.notas_internas || '',
+            fotos: dq.fotos || [],
+            creado_en: dq.creado_en || new Date().toISOString(),
+            es_nuevo: false,
+          });
+        });
+        localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(Array.from(qMap.values())));
+      }
+
+      // 3. Sync Citas
+      const { data: dbCitas, error: errCi } = await supabase.from('citas').select('*');
+      if (dbCitas && dbCitas.length > 0 && !errCi) {
+        const localCitas = this.getCitas();
+        const ciMap = new Map<string, Cita>();
+        localCitas.forEach((c) => ciMap.set(c.id, c));
+        dbCitas.forEach((dc: any) => {
+          ciMap.set(dc.id, {
+            id: dc.id,
+            cliente_id: dc.cliente_id,
+            titulo: dc.titulo,
+            servicio: dc.servicio,
+            direccion: dc.direccion,
+            barrio: dc.barrio,
+            ciudad: dc.ciudad || 'Bogotá',
+            fecha_inicio: dc.fecha_inicio,
+            fecha_fin: dc.fecha_fin,
+            estado: dc.estado || 'pendiente',
+            valor: Number(dc.valor || 0),
+            notas: dc.notas || '',
+            recordatorio_enviado: Boolean(dc.recordatorio_enviado),
+            creado_en: dc.creado_en || new Date().toISOString(),
+          });
+        });
+        localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(Array.from(ciMap.values())));
+      }
+
+      this.notify();
+    } catch (e) {
+      console.warn('Supabase sync notice:', e);
     }
   }
 
@@ -475,7 +482,9 @@ class StorageService {
 
   public saveAdministrador(admin: Administrador): void {
     const list = this.getAdministradores();
-    const idx = list.findIndex((a) => a.id === admin.id || a.correo.toLowerCase() === admin.correo.toLowerCase());
+    const idx = list.findIndex(
+      (a) => a.id === admin.id || a.correo.toLowerCase() === admin.correo.toLowerCase()
+    );
     if (idx >= 0) {
       list[idx] = admin;
     } else {
@@ -485,7 +494,11 @@ class StorageService {
     this.notify();
   }
 
-  public inviteAdmin(correo: string, nombre: string, rol: 'admin' | 'propietaria' = 'admin'): Administrador {
+  public inviteAdmin(
+    correo: string,
+    nombre: string,
+    rol: 'admin' | 'propietaria' = 'admin'
+  ): Administrador {
     const admins = this.getAdministradores();
     const normalized = correo.trim().toLowerCase();
     const existing = admins.find((a) => a.correo.toLowerCase() === normalized);
@@ -497,7 +510,7 @@ class StorageService {
       return existing;
     }
     const newAdmin: Administrador = {
-      id: `adm-${Date.now()}`,
+      id: generateUUID(),
       correo: normalized,
       nombre: nombre || 'Administrador Tapiz Fresh',
       rol,
@@ -530,6 +543,28 @@ class StorageService {
     return list.find((c) => c.id === id) || null;
   }
 
+  public async syncClienteToSupabase(cliente: Cliente): Promise<void> {
+    if (!isSupabaseConfigured() || !supabase) return;
+    try {
+      await supabase.from('clientes').upsert({
+        id: cliente.id,
+        nombre: cliente.nombre,
+        telefono: cliente.telefono,
+        correo: cliente.correo,
+        direccion: cliente.direccion,
+        barrio: cliente.barrio,
+        ciudad: cliente.ciudad || 'Bogotá',
+        origen: cliente.origen || 'WhatsApp',
+        notas: cliente.notas || '',
+        etiquetas: cliente.etiquetas || [],
+        estado: cliente.estado || 'nuevo',
+        actualizado_en: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn('Error syncClienteToSupabase:', err);
+    }
+  }
+
   public saveCliente(cliente: Cliente): void {
     const list = this.getClientes();
     const idx = list.findIndex((c) => c.id === cliente.id);
@@ -542,28 +577,8 @@ class StorageService {
     localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(list));
     this.notify();
 
-    // Sync to Supabase cloud
-    if (isSupabaseConfigured() && supabase) {
-      supabase
-        .from('clientes')
-        .upsert({
-          id: cliente.id.length === 36 ? cliente.id : undefined,
-          nombre: cliente.nombre,
-          telefono: cliente.telefono,
-          correo: cliente.correo,
-          direccion: cliente.direccion,
-          barrio: cliente.barrio,
-          ciudad: cliente.ciudad,
-          origen: cliente.origen,
-          notas: cliente.notas,
-          etiquetas: cliente.etiquetas,
-          estado: cliente.estado,
-        })
-        .then(
-          () => {},
-          (err: any) => console.warn('Supabase save notice:', err)
-        );
-    }
+    // Sync to Supabase cloud immediately
+    this.syncClienteToSupabase(cliente);
   }
 
   public deleteCliente(id: string): void {
@@ -571,10 +586,15 @@ class StorageService {
     list = list.filter((c) => c.id !== id);
     localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(list));
     this.notify();
+
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('clientes').delete().eq('id', id).then(() => {});
+    }
   }
 
   /**
    * Deduplicates by phone or email. If found, updates client info; otherwise creates new.
+   * Immediately persists to local storage and syncs to Supabase.
    */
   public saveOrUpdateClienteFromForm(data: {
     nombre: string;
@@ -591,7 +611,8 @@ class StorageService {
     const cleanEmail = data.correo.trim().toLowerCase();
 
     const existingIndex = list.findIndex((c) => {
-      const matchPhone = cleanPhone && c.telefono.replace(/\D/g, '').endsWith(cleanPhone.slice(-7));
+      const matchPhone =
+        cleanPhone && c.telefono.replace(/\D/g, '').endsWith(cleanPhone.slice(-7));
       const matchEmail = cleanEmail && c.correo.trim().toLowerCase() === cleanEmail;
       return matchPhone || matchEmail;
     });
@@ -609,16 +630,21 @@ class StorageService {
         barrio: data.barrio.trim() || existing.barrio,
         ciudad: data.ciudad.trim() || existing.ciudad,
         origen: data.origen || existing.origen,
-        notas: data.notas ? `${existing.notas ? existing.notas + '\n' : ''}${data.notas}` : existing.notas,
+        notas: data.notas
+          ? `${existing.notas ? existing.notas + '\n' : ''}${data.notas}`
+          : existing.notas,
         actualizado_en: now,
       };
       list[existingIndex] = updated;
       localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(list));
       this.notify();
+
+      // Sync to cloud
+      this.syncClienteToSupabase(updated);
       return updated;
     } else {
       const newClient: Cliente = {
-        id: `cli-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        id: generateUUID(),
         nombre: data.nombre.trim(),
         telefono: data.telefono.trim(),
         correo: data.correo.trim(),
@@ -635,6 +661,9 @@ class StorageService {
       list.unshift(newClient);
       localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(list));
       this.notify();
+
+      // Sync to cloud
+      this.syncClienteToSupabase(newClient);
       return newClient;
     }
   }
@@ -643,6 +672,24 @@ class StorageService {
   public getCotizaciones(): Cotizacion[] {
     const raw = localStorage.getItem(STORAGE_KEYS.QUOTES);
     return raw ? JSON.parse(raw) : [];
+  }
+
+  public async syncCotizacionToSupabase(cot: Cotizacion): Promise<void> {
+    if (!isSupabaseConfigured() || !supabase) return;
+    try {
+      await supabase.from('cotizaciones').upsert({
+        id: cot.id,
+        cliente_id: cot.cliente_id,
+        items: cot.items,
+        valor_cotizado: cot.valor_cotizado,
+        estado: cot.estado,
+        notas_internas: cot.notas_internas,
+        fotos: cot.fotos || [],
+        creado_en: cot.creado_en,
+      });
+    } catch (err) {
+      console.warn('Error syncCotizacionToSupabase:', err);
+    }
   }
 
   public saveCotizacion(cot: Cotizacion): void {
@@ -655,6 +702,9 @@ class StorageService {
     }
     localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(list));
     this.notify();
+
+    // Sync to Supabase
+    this.syncCotizacionToSupabase(cot);
   }
 
   public createCotizacionFromPublicForm(
@@ -665,7 +715,7 @@ class StorageService {
     notas?: string
   ): Cotizacion {
     const cot: Cotizacion = {
-      id: `cot-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: generateUUID(),
       cliente_id: cliente.id,
       cliente_nombre: cliente.nombre,
       cliente_telefono: cliente.telefono,
@@ -674,7 +724,9 @@ class StorageService {
       items,
       valor_cotizado: valorCotizado,
       estado: 'pendiente',
-      notas_internas: notas || `Cotización generada automáticamente desde formulario público. Origen: ${cliente.origen}`,
+      notas_internas:
+        notas ||
+        `Cotización con foto de mueble desde formulario web. Origen: ${cliente.origen}`,
       fotos,
       creado_en: new Date().toISOString(),
       es_nuevo: true,
@@ -682,7 +734,7 @@ class StorageService {
 
     this.saveCotizacion(cot);
 
-    // Update client status if needed
+    // Update client status
     if (cliente.estado === 'nuevo') {
       cliente.estado = 'cotizado';
       this.saveCliente(cliente);
@@ -690,16 +742,16 @@ class StorageService {
 
     // Add in-app notification for Omaira
     this.addNotification({
-      titulo: '¡Nueva cotización recibida!',
-      mensaje: `${cliente.nombre} (${cliente.barrio}) solicitó cotización por $${valorCotizado.toLocaleString('es-CO')}.`,
+      titulo: '¡Nueva solicitud con foto recibida!',
+      mensaje: `${cliente.nombre} (${cliente.barrio}) envió foto para cotizar lavado de muebles.`,
       tipo: 'solicitud',
       cliente_id: cliente.id,
     });
 
     // Add to daily tasks
     this.addTask({
-      titulo: `Responder cotización de ${cliente.nombre}`,
-      detalle: `${cliente.barrio} - Valor: $${valorCotizado.toLocaleString('es-CO')}`,
+      titulo: `Cotizar por foto a ${cliente.nombre}`,
+      detalle: `${cliente.barrio} - Tel: ${cliente.telefono}`,
       tipo: 'cotizacion',
       cliente_id: cliente.id,
       cliente_nombre: cliente.nombre,
@@ -723,6 +775,30 @@ class StorageService {
     return raw ? JSON.parse(raw) : [];
   }
 
+  public async syncCitaToSupabase(cita: Cita): Promise<void> {
+    if (!isSupabaseConfigured() || !supabase) return;
+    try {
+      await supabase.from('citas').upsert({
+        id: cita.id,
+        cliente_id: cita.cliente_id,
+        titulo: cita.titulo,
+        servicio: cita.servicio,
+        direccion: cita.direccion,
+        barrio: cita.barrio,
+        ciudad: cita.ciudad || 'Bogotá',
+        fecha_inicio: cita.fecha_inicio,
+        fecha_fin: cita.fecha_fin,
+        estado: cita.estado,
+        valor: cita.valor,
+        notas: cita.notas,
+        recordatorio_enviado: cita.recordatorio_enviado,
+        creado_en: cita.creado_en,
+      });
+    } catch (err) {
+      console.warn('Error syncCitaToSupabase:', err);
+    }
+  }
+
   public saveCita(cita: Cita): void {
     const list = this.getCitas();
     const idx = list.findIndex((c) => c.id === cita.id);
@@ -733,6 +809,9 @@ class StorageService {
     }
     localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(list));
     this.notify();
+
+    // Sync to Supabase
+    this.syncCitaToSupabase(cita);
   }
 
   public deleteCita(id: string): void {
@@ -740,11 +819,12 @@ class StorageService {
     list = list.filter((c) => c.id !== id);
     localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(list));
     this.notify();
+
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('citas').delete().eq('id', id).then(() => {});
+    }
   }
 
-  /**
-   * Checks for schedule conflicts in appointments
-   */
   public checkScheduleConflict(
     fechaInicio: string,
     fechaFin: string,
@@ -761,7 +841,6 @@ class StorageService {
       const cStart = new Date(c.fecha_inicio).getTime();
       const cEnd = new Date(c.fecha_fin).getTime();
 
-      // Check overlap
       if (start < cEnd && end > cStart) {
         return { hasConflict: true, conflictingCita: c };
       }
@@ -784,12 +863,27 @@ class StorageService {
     const list = this.getSeguimientos();
     const newSeg: Seguimiento = {
       ...seg,
-      id: `seg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: generateUUID(),
       fecha: new Date().toISOString(),
     };
     list.unshift(newSeg);
     localStorage.setItem(STORAGE_KEYS.FOLLOWUPS, JSON.stringify(list));
     this.notify();
+
+    if (isSupabaseConfigured() && supabase) {
+      supabase
+        .from('seguimientos')
+        .insert({
+          id: newSeg.id,
+          cliente_id: newSeg.cliente_id,
+          tipo: newSeg.tipo,
+          nota: newSeg.nota,
+          fecha: newSeg.fecha,
+          creado_por: newSeg.creado_por,
+        })
+        .then(() => {});
+    }
+
     return newSeg;
   }
 

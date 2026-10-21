@@ -61,6 +61,14 @@ const FURNITURE_TYPES: FurnitureCategory[] = [
 ];
 
 export const QuoteCalculator: React.FC<QuoteCalculatorProps> = ({ onCotizacionCreada }) => {
+  const [config, setConfig] = useState(storage.getConfig());
+
+  React.useEffect(() => {
+    return storage.subscribe(() => {
+      setConfig(storage.getConfig());
+    });
+  }, []);
+
   const [selectedFurniture, setSelectedFurniture] = useState<string[]>(['sofa-3']);
   const [photos, setPhotos] = useState<string[]>([]);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);

@@ -139,8 +139,8 @@ export interface ConfiguracionApp {
   fotoHeroPrincipal?: string;
   fotosMuebles?: Record<string, string>;
   fotoEquipo?: string;
-  nombrePropietaria: string;
-  smtpBrevoConfig: {
+  nombrePropietaria?: string;
+  smtpBrevoConfig?: {
     host: string;
     port: number;
     senderEmail: string;

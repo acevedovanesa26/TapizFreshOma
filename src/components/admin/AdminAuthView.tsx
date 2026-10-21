@@ -326,7 +326,7 @@ export const AdminAuthView: React.FC<AdminAuthViewProps> = ({ onSuccess, onBackT
             <span>{errorMsg}</span>
           </div>
         )}
-        {infoMsg && (
+        {infoMsg && step !== 'enter_otp' && (
           <div className="mb-4 p-3 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-medium flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-teal-600" />
             <span>{infoMsg}</span>
