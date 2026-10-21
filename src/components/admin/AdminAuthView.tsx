@@ -50,7 +50,6 @@ export const AdminAuthView: React.FC<AdminAuthViewProps> = ({ onSuccess, onBackT
   // Timers
   const [otpExpiresIn, setOtpExpiresIn] = useState<number>(0);
   const [resendCooldown, setResendCooldown] = useState<number>(0);
-  const [devSimulatedCode, setDevSimulatedCode] = useState<string | null>(null);
 
   // Check lockout on mount
   useEffect(() => {
@@ -87,7 +86,7 @@ export const AdminAuthView: React.FC<AdminAuthViewProps> = ({ onSuccess, onBackT
   }, [step]);
 
   // Handle Request OTP
-  const handleRequestOtp = (e?: React.FormEvent) => {
+  const handleRequestOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setErrorMsg('');
     setInfoMsg('');
@@ -99,8 +98,8 @@ export const AdminAuthView: React.FC<AdminAuthViewProps> = ({ onSuccess, onBackT
 
     setLoading(true);
 
-    setTimeout(() => {
-      const res = auth.requestOtp(email);
+    try {
+      const res = await auth.requestOtp(email);
       setLoading(false);
 
       if (!res.success) {
@@ -110,9 +109,6 @@ export const AdminAuthView: React.FC<AdminAuthViewProps> = ({ onSuccess, onBackT
       }
 
       setInfoMsg(res.message);
-      if (res.generatedCode) {
-        setDevSimulatedCode(res.generatedCode);
-      }
       setStep('enter_otp');
       setOtpDigits(['', '', '', '', '', '']);
 
@@ -120,7 +116,10 @@ export const AdminAuthView: React.FC<AdminAuthViewProps> = ({ onSuccess, onBackT
       setTimeout(() => {
         inputRefs.current[0]?.focus();
       }, 100);
-    }, 500);
+    } catch (err: any) {
+      setLoading(false);
+      setErrorMsg('Error al enviar el código. Verifica tu conexión.');
+    }
   };
 
   // Handle 6-Box OTP input navigation
@@ -313,23 +312,12 @@ export const AdminAuthView: React.FC<AdminAuthViewProps> = ({ onSuccess, onBackT
           </div>
         )}
 
-        {/* Dev hint / test credentials banner */}
-        <div className="mb-5 p-3 rounded-2xl bg-[#EBF7F8] border border-[#78BDC4]/40 flex items-center justify-between text-xs text-[#2F6F77]">
-          <div>
-            <span className="font-bold block">Administrador Propietaria:</span>
-            <code className="text-[11px] font-mono text-slate-700">tapizoma2026@gmail.com</code>
+        {/* Security Notification */}
+        {step === 'enter_otp' && (
+          <div className="mb-5 p-3 rounded-2xl bg-[#EBF7F8] border border-[#78BDC4]/40 text-xs text-[#2F6F77] text-center">
+            🔒 <strong>Código enviado por correo:</strong> Revisa tu bandeja de entrada o spam en <strong>{email}</strong>. Por tu seguridad, el código solo llega a tu correo.
           </div>
-          {devSimulatedCode && step === 'enter_otp' && (
-            <button
-              onClick={() => {
-                setOtpDigits(devSimulatedCode.split(''));
-              }}
-              className="px-2.5 py-1 bg-[#78BDC4] text-white rounded-lg font-bold text-[11px] hover:bg-[#4F9DA6] cursor-pointer"
-            >
-              Autollenar ({devSimulatedCode})
-            </button>
-          )}
-        </div>
+        )}
 
         {/* Messages */}
         {errorMsg && (

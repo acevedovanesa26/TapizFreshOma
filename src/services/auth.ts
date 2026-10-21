@@ -147,7 +147,7 @@ class AuthService {
    * If email is in administradores table, generates a 6-digit code.
    * Regardless, returns uniform feedback so external callers cannot probe for emails.
    */
-  public requestOtp(email: string): { success: boolean; message: string; generatedCode?: string } {
+  public async requestOtp(email: string): Promise<{ success: boolean; message: string }> {
     const lockout = this.isLockedOut();
     if (lockout.locked) {
       return {
@@ -177,10 +177,13 @@ class AuthService {
 
     localStorage.setItem(AUTH_STORAGE_KEYS.ACTIVE_OTP, JSON.stringify(otpSession));
 
+    // Send real email via Brevo / Supabase
+    const { sendOtpEmail } = await import('./emailService');
+    const emailResult = await sendOtpEmail(admin.correo, code);
+
     return {
       success: true,
-      message: `Código enviado con éxito a ${admin.correo}. Válido por 10 minutos.`,
-      generatedCode: code, // Provided for dev preview simulation
+      message: emailResult.message || `Código enviado a ${admin.correo}. Válido por 10 minutos. Revisa tu bandeja de entrada y spam.`,
     };
   }
 

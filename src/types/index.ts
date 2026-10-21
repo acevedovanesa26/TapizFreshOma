@@ -136,6 +136,8 @@ export interface ConfiguracionApp {
   servicios: ServicioCatalogo[];
   plantillas: PlantillasMensaje;
   carrusel: ItemCarrusel[];
+  fotoHeroPrincipal?: string;
+  fotosMuebles?: Record<string, string>;
   fotoEquipo?: string;
   nombrePropietaria: string;
   smtpBrevoConfig: {

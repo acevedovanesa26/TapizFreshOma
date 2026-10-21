@@ -3,6 +3,7 @@ import { Phone, Mail, MapPin, Send, CheckCircle2, MessageSquare, Camera } from '
 import { storage } from '../../services/storage';
 import { OrigenCliente } from '../../types';
 import { openWhatsAppChat, TAPIZ_FRESH_PHONE, TAPIZ_FRESH_PHONE_FORMATTED } from '../../services/whatsapp';
+import { sendLeadNotificationToOmaira } from '../../services/emailService';
 
 export const PublicContactSection: React.FC = () => {
   const [nombre, setNombre] = useState('');
@@ -53,6 +54,17 @@ export const PublicContactSection: React.FC = () => {
         cliente_id: cliente.id,
         cliente_nombre: cliente.nombre,
       });
+
+      // Send email notification to Omaira
+      sendLeadNotificationToOmaira({
+        nombre,
+        telefono,
+        correo,
+        direccion,
+        barrio,
+        muebles: mensaje ? `Consulta: ${mensaje}` : 'Consulta de lavado de muebles en Bogotá',
+        notas: mensaje,
+      }).catch((e) => console.warn('Email notice:', e));
 
       setCargando(false);
       setEnviado(true);

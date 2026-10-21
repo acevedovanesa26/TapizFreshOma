@@ -15,6 +15,7 @@ import confetti from 'canvas-confetti';
 import { storage } from '../../services/storage';
 import { Cliente, CotizacionItem, OrigenCliente } from '../../types';
 import { openWhatsAppChat, TAPIZ_FRESH_PHONE, TAPIZ_FRESH_PHONE_FORMATTED } from '../../services/whatsapp';
+import { sendLeadNotificationToOmaira } from '../../services/emailService';
 
 interface QuoteCalculatorProps {
   onCotizacionCreada?: () => void;
@@ -155,7 +156,19 @@ export const QuoteCalculator: React.FC<QuoteCalculatorProps> = ({ onCotizacionCr
         `Muebles a cotizar por foto: ${selectedFurniture.map((id) => FURNITURE_TYPES.find((f) => f.id === id)?.name).join(', ')}. ${notas || ''}`
       );
 
-      // 4. Confetti celebration
+      // 4. Send email notification to Omaira (tapizoma2026@gmail.com)
+      sendLeadNotificationToOmaira({
+        nombre,
+        telefono,
+        correo,
+        direccion,
+        barrio,
+        muebles: selectedFurniture.map((id) => FURNITURE_TYPES.find((f) => f.id === id)?.name).join(', '),
+        fotos: photos,
+        notas,
+      }).catch((e) => console.warn('Email notification notice:', e));
+
+      // 5. Confetti celebration
       try {
         confetti({
           particleCount: 60,
@@ -264,6 +277,8 @@ export const QuoteCalculator: React.FC<QuoteCalculatorProps> = ({ onCotizacionCr
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {FURNITURE_TYPES.map((item) => {
                   const isSelected = selectedFurniture.includes(item.id);
+                  const config = storage.getConfig();
+                  const customImg = (config.fotosMuebles && config.fotosMuebles[item.id]) || item.image;
                   return (
                     <div
                       key={item.id}
@@ -276,7 +291,7 @@ export const QuoteCalculator: React.FC<QuoteCalculatorProps> = ({ onCotizacionCr
                     >
                       <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 mb-2 relative">
                         <img
-                          src={item.image}
+                          src={customImg}
                           alt={item.name}
                           className="w-full h-full object-cover"
                         />

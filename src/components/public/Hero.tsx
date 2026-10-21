@@ -1,12 +1,18 @@
 import React from 'react';
-import { Sparkles, Camera, MapPin, MessageSquare, ArrowRight, Home, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Camera, MapPin, MessageSquare, ArrowRight, Home } from 'lucide-react';
 import { buildWhatsAppLink, TAPIZ_FRESH_PHONE, TAPIZ_FRESH_PHONE_FORMATTED } from '../../services/whatsapp';
+import { storage } from '../../services/storage';
 
 interface HeroProps {
   onCotizarClick: () => void;
 }
 
 export const Hero: React.FC<HeroProps> = ({ onCotizarClick }) => {
+  const config = storage.getConfig();
+  const heroImage =
+    config.fotoHeroPrincipal ||
+    'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80';
+
   const waUrl = buildWhatsAppLink(
     TAPIZ_FRESH_PHONE,
     '¡Hola Omaira! Quiero cotizar el lavado de mis muebles con Tapiz Fresh en Bogotá. Te adjunto una foto completa de mi mueble.'
@@ -89,7 +95,7 @@ export const Hero: React.FC<HeroProps> = ({ onCotizarClick }) => {
             <div className="relative mx-auto max-w-md lg:max-w-none">
               <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-900 group relative">
                 <img
-                  src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80"
+                  src={heroImage}
                   alt="Lavado profesional de muebles Tapiz Fresh en Bogotá"
                   className="w-full h-[380px] sm:h-[420px] object-cover group-hover:scale-105 transition-transform duration-700"
                 />

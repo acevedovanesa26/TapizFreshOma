@@ -8,6 +8,7 @@ import {
   NotificacionSistema,
   TareaHoy,
 } from '../types';
+import { supabase, isSupabaseConfigured } from './supabase';
 
 const STORAGE_KEYS = {
   ADMINS: 'tapiz_fresh_admins_v1',
@@ -378,6 +379,40 @@ class StorageService {
 
   constructor() {
     this.ensureInitialized();
+    this.syncFromSupabase();
+  }
+
+  public async syncFromSupabase(): Promise<void> {
+    if (!isSupabaseConfigured() || !supabase) return;
+    try {
+      const { data: dbClientes, error } = await supabase.from('clientes').select('*');
+      if (dbClientes && dbClientes.length > 0 && !error) {
+        const local = this.getClientes();
+        const map = new Map<string, Cliente>();
+        local.forEach((c) => map.set(c.id, c));
+        dbClientes.forEach((dbC: any) => {
+          map.set(dbC.id, {
+            id: dbC.id,
+            nombre: dbC.nombre,
+            telefono: dbC.telefono,
+            correo: dbC.correo,
+            direccion: dbC.direccion,
+            barrio: dbC.barrio,
+            ciudad: dbC.ciudad || 'Bogotá',
+            origen: dbC.origen || 'WhatsApp',
+            notas: dbC.notas || '',
+            etiquetas: dbC.etiquetas || [],
+            estado: dbC.estado || 'nuevo',
+            creado_en: dbC.creado_en || new Date().toISOString(),
+            actualizado_en: dbC.actualizado_en || new Date().toISOString(),
+          });
+        });
+        localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(Array.from(map.values())));
+        this.notify();
+      }
+    } catch (e) {
+      console.warn('Supabase sync notice:', e);
+    }
   }
 
   private ensureInitialized(): void {
@@ -506,6 +541,29 @@ class StorageService {
     }
     localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(list));
     this.notify();
+
+    // Sync to Supabase cloud
+    if (isSupabaseConfigured() && supabase) {
+      supabase
+        .from('clientes')
+        .upsert({
+          id: cliente.id.length === 36 ? cliente.id : undefined,
+          nombre: cliente.nombre,
+          telefono: cliente.telefono,
+          correo: cliente.correo,
+          direccion: cliente.direccion,
+          barrio: cliente.barrio,
+          ciudad: cliente.ciudad,
+          origen: cliente.origen,
+          notas: cliente.notas,
+          etiquetas: cliente.etiquetas,
+          estado: cliente.estado,
+        })
+        .then(
+          () => {},
+          (err: any) => console.warn('Supabase save notice:', err)
+        );
+    }
   }
 
   public deleteCliente(id: string): void {
