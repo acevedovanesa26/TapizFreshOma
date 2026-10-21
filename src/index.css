@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --brand-teal: #78BDC4;
+    --brand-teal-dark: #4F9DA6;
+    --brand-teal-deep: #2F6F77;
+    --brand-teal-light: #EBF7F8;
+    --brand-teal-50: #F4FAF9;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+    background-color: #f8fafc;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Bubbles Floating Background Animation */
+@keyframes floatBubble {
+  0% {
+    transform: translateY(100vh) scale(0.6);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.35;
+  }
+  80% {
+    opacity: 0.25;
+  }
+  100% {
+    transform: translateY(-20vh) scale(1.1);
+    opacity: 0;
+  }
+}
+
+.bubble-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(120, 189, 196, 0.45) 60%, rgba(79, 157, 166, 0.2));
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  animation: floatBubble 14s infinite ease-in-out;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.8), 0 4px 12px rgba(120, 189, 196, 0.25);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #78BDC4;
+}

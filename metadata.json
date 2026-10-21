@@ -1,0 +1,6 @@
+{
+  "name": "Tapiz Fresh - CRM & Agenda de Lavado de Muebles",
+  "description": "Plataforma integral de Tapiz Fresh para cotizaciones, captación de clientes, CRM, embudo de ventas, agenda y panel de administración.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
