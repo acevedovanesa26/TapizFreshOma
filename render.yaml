@@ -1,0 +1,18 @@
+# Render Blueprint Specification for Tapiz Fresh
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: tapiz-fresh-bogota
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
