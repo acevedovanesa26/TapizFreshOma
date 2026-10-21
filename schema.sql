@@ -157,64 +157,61 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Políticas para Administradores
-CREATE POLICY "Admins pueden ver la lista de administradores"
+CREATE POLICY "Permitir lectura de administradores"
 ON public.administradores FOR SELECT
-TO authenticated
-USING (public.is_admin());
+TO anon, authenticated
+USING (true);
 
-CREATE POLICY "Propietarias pueden insertar o editar administradores"
+CREATE POLICY "Permitir edición de administradores"
 ON public.administradores FOR ALL
-TO authenticated
-USING (
-    EXISTS (
-        SELECT 1 FROM public.administradores 
-        WHERE correo = auth.jwt() ->> 'email' 
-          AND rol = 'propietaria' 
-          AND activo = true
-    )
-);
+TO anon, authenticated
+USING (true)
+WITH CHECK (true);
 
 -- Políticas para Clientes
-CREATE POLICY "Solo administradores pueden leer clientes"
+CREATE POLICY "Permitir lectura de clientes"
 ON public.clientes FOR SELECT
-TO authenticated
-USING (public.is_admin());
-
-CREATE POLICY "Solo administradores pueden modificar clientes"
-ON public.clientes FOR UPDATE
-TO authenticated
-USING (public.is_admin());
-
-CREATE POLICY "Solo administradores pueden eliminar clientes"
-ON public.clientes FOR DELETE
-TO authenticated
-USING (public.is_admin());
-
--- Permitir inserción anónima desde formularios públicos (con deduplicación)
-CREATE POLICY "Formularios públicos pueden registrar clientes"
-ON public.clientes FOR INSERT
 TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Permitir edición de clientes"
+ON public.clientes FOR ALL
+TO anon, authenticated
+USING (true)
 WITH CHECK (true);
 
 -- Políticas para Cotizaciones
-CREATE POLICY "Solo administradores pueden ver y gestionar cotizaciones"
-ON public.cotizaciones FOR ALL
-TO authenticated
-USING (public.is_admin());
-
-CREATE POLICY "Formularios públicos pueden enviar cotizaciones"
-ON public.cotizaciones FOR INSERT
+CREATE POLICY "Permitir lectura de cotizaciones"
+ON public.cotizaciones FOR SELECT
 TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Permitir edición de cotizaciones"
+ON public.cotizaciones FOR ALL
+TO anon, authenticated
+USING (true)
 WITH CHECK (true);
 
 -- Políticas para Citas
-CREATE POLICY "Solo administradores pueden gestionar citas"
+CREATE POLICY "Permitir lectura de citas"
+ON public.citas FOR SELECT
+TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Permitir edición de citas"
 ON public.citas FOR ALL
-TO authenticated
-USING (public.is_admin());
+TO anon, authenticated
+USING (true)
+WITH CHECK (true);
 
 -- Políticas para Seguimientos
-CREATE POLICY "Solo administradores pueden gestionar seguimientos"
+CREATE POLICY "Permitir lectura de seguimientos"
+ON public.seguimientos FOR SELECT
+TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Permitir edición de seguimientos"
 ON public.seguimientos FOR ALL
-TO authenticated
-USING (public.is_admin());
+TO anon, authenticated
+USING (true)
+WITH CHECK (true);

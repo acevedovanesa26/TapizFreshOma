@@ -79,6 +79,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ currentAdmin }) => {
       setAdmins(storage.getAdministradores());
     };
     refresh();
+
+    // Prefetch shared server config if local inputs are empty
+    fetch('/api/config')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.supabaseUrl && !sbUrlInput) setSbUrlInput(data.supabaseUrl);
+        if (data.supabaseAnonKey && !sbKeyInput) setSbKeyInput(data.supabaseAnonKey);
+        if (data.brevoSenderEmail && !brevoSenderInput) setBrevoSenderInput(data.brevoSenderEmail);
+      })
+      .catch(() => {});
+
     return storage.subscribe(refresh);
   }, []);
 
@@ -113,8 +124,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ currentAdmin }) => {
     saveBrevoSenderEmail(brevoSenderInput);
     saveSupabaseCredentials(sbUrlInput, sbKeyInput);
 
-    setConnectionNotice('¡Configuración guardada! Tus credenciales se han actualizado con éxito.');
-    setTimeout(() => setConnectionNotice(null), 4000);
+    setConnectionNotice('¡Configuración guardada en el servidor! Sincronizada automáticamente para todos los dispositivos e IPs (celulares y computadores).');
+    setTimeout(() => setConnectionNotice(null), 5000);
   };
 
   const handleRunEmailTest = async () => {
@@ -618,7 +629,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ currentAdmin }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Clave API de Brevo (API Key)
+                    Clave API de Brevo (API Key v3)
                   </label>
                   <input
                     type="password"
@@ -627,9 +638,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ currentAdmin }) => {
                     onChange={(e) => setBrevoKeyInput(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-white focus:border-[#78BDC4]"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    Obtenla gratis en brevo.com → SMTP & API → Claves API
-                  </p>
+                  {brevoKeyInput && !brevoKeyInput.trim().startsWith('xkeysib-') ? (
+                    <div className="mt-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] leading-relaxed">
+                      ⚠️ <strong>Atención:</strong> Las Claves API de Brevo siempre empiezan por{' '}
+                      <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">xkeysib-</code>.
+                      Si tu clave no empieza así, probablemente sea una Clave SMTP. Debes ir a Brevo → SMTP & API → pestaña <strong>Claves API</strong> (no Claves SMTP) y generar una nueva clave.
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      Debe empezar por <code className="text-slate-600 font-mono">xkeysib-</code> (Pestaña Claves API en Brevo)
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -644,9 +663,23 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ currentAdmin }) => {
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-white focus:border-[#78BDC4]"
                   />
                   <p className="text-[10px] text-slate-400 mt-1">
-                    Debe coincidir con el correo verificado como remitente en Brevo
+                    Debe ser el correo registrado y verificado en Brevo (ej: omairamotato28@gmail.com o tapizoma2026@gmail.com)
                   </p>
                 </div>
+              </div>
+
+              {/* Step-by-step guidance card */}
+              <div className="p-3.5 rounded-xl bg-[#EBF7F8]/70 border border-[#78BDC4]/40 text-xs text-[#2F6F77] space-y-1">
+                <span className="font-bold block text-xs text-[#1e4d53]">
+                  💡 ¿Cómo obtener la clave correcta en Brevo para que los correos funcionen 100%?
+                </span>
+                <ol className="list-decimal list-inside text-[11px] text-[#2F6F77] space-y-1">
+                  <li>Inicia sesión en <a href="https://app.brevo.com" target="_blank" rel="noreferrer" className="underline font-bold">brevo.com</a>.</li>
+                  <li>Haz clic en tu nombre en la esquina superior derecha y selecciona <strong>SMTP y API</strong>.</li>
+                  <li>Haz clic en la pestaña <strong>"Claves API"</strong> (¡Ojo! No en "Claves SMTP").</li>
+                  <li>Haz clic en <strong>"Generar una nueva clave API"</strong>, dale un nombre (ej: Web Tapiz) y cópiala.</li>
+                  <li>Pégala arriba y haz clic en <strong>"Guardar Conexión"</strong>. ¡Quedará activa para todos los dispositivos!</li>
+                </ol>
               </div>
 
               {/* Botón de Prueba en Vivo de Brevo */}

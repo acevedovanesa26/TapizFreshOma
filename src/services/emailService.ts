@@ -10,9 +10,15 @@ export function getBrevoApiKey(): string {
 }
 
 export function saveBrevoApiKey(key: string): void {
+  const clean = key.trim().replace(/^["']|["']$/g, '');
   if (typeof window !== 'undefined') {
-    localStorage.setItem('tapiz_brevo_api_key', key.trim());
+    localStorage.setItem('tapiz_brevo_api_key', clean);
   }
+  fetch('/api/config', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ brevoApiKey: clean }),
+  }).catch((e) => console.warn('Sync brevo key to server notice:', e));
 }
 
 // Get Brevo Sender Email (the email address authorized in Brevo)
@@ -25,9 +31,15 @@ export function getBrevoSenderEmail(): string {
 }
 
 export function saveBrevoSenderEmail(email: string): void {
+  const clean = email.trim();
   if (typeof window !== 'undefined') {
-    localStorage.setItem('tapiz_brevo_sender_email', email.trim());
+    localStorage.setItem('tapiz_brevo_sender_email', clean);
   }
+  fetch('/api/config', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ brevoSenderEmail: clean }),
+  }).catch((e) => console.warn('Sync brevo sender to server notice:', e));
 }
 
 /**

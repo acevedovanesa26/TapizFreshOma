@@ -8,7 +8,12 @@ import {
   NotificacionSistema,
   TareaHoy,
 } from '../types';
-import { supabase, isSupabaseConfigured } from './supabase';
+import {
+  supabase,
+  isSupabaseConfigured,
+  initSupabaseFromServer,
+  subscribeSupabaseConfig,
+} from './supabase';
 
 const STORAGE_KEYS = {
   ADMINS: 'tapiz_fresh_admins_v1',
@@ -308,8 +313,93 @@ class StorageService {
 
   constructor() {
     this.ensureInitialized();
-    this.syncFromSupabase();
-    this.initRealtime();
+    this.syncWithServerBackup();
+    initSupabaseFromServer().then((configured) => {
+      if (configured) {
+        this.syncFromSupabase();
+        this.initRealtime();
+      }
+    });
+    subscribeSupabaseConfig(() => {
+      this.syncFromSupabase();
+      this.initRealtime();
+    });
+  }
+
+  public async syncWithServerBackup(): Promise<void> {
+    try {
+      const res = await fetch('/api/sync');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data) return;
+
+      let changed = false;
+
+      if (Array.isArray(data.clientes) && data.clientes.length > 0) {
+        const local = this.getClientes();
+        const map = new Map<string, Cliente>();
+        local.forEach((c) => map.set(c.id, c));
+        data.clientes.forEach((sc: any) => {
+          if (sc && sc.id && !map.has(sc.id)) {
+            map.set(sc.id, sc);
+            changed = true;
+          }
+        });
+        if (changed) {
+          localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(Array.from(map.values())));
+        }
+      }
+
+      if (Array.isArray(data.cotizaciones) && data.cotizaciones.length > 0) {
+        const localQ = this.getCotizaciones();
+        const qMap = new Map<string, Cotizacion>();
+        localQ.forEach((q) => qMap.set(q.id, q));
+        data.cotizaciones.forEach((sq: any) => {
+          if (sq && sq.id && !qMap.has(sq.id)) {
+            qMap.set(sq.id, sq);
+            changed = true;
+          }
+        });
+        if (changed) {
+          localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(Array.from(qMap.values())));
+        }
+      }
+
+      if (Array.isArray(data.citas) && data.citas.length > 0) {
+        const localC = this.getCitas();
+        const cMap = new Map<string, Cita>();
+        localC.forEach((c) => cMap.set(c.id, c));
+        data.citas.forEach((sc: any) => {
+          if (sc && sc.id && !cMap.has(sc.id)) {
+            cMap.set(sc.id, sc);
+            changed = true;
+          }
+        });
+        if (changed) {
+          localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(Array.from(cMap.values())));
+        }
+      }
+
+      if (changed) {
+        this.notify();
+      }
+    } catch (e) {
+      console.warn('Server sync notice:', e);
+    }
+  }
+
+  public pushToServerBackup(): void {
+    try {
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          clientes: this.getClientes(),
+          cotizaciones: this.getCotizaciones(),
+          citas: this.getCitas(),
+        }),
+      }).catch(() => {});
+    } catch {}
   }
 
   private ensureInitialized(): void {
@@ -579,6 +669,7 @@ class StorageService {
 
     // Sync to Supabase cloud immediately
     this.syncClienteToSupabase(cliente);
+    this.pushToServerBackup();
   }
 
   public deleteCliente(id: string): void {
@@ -586,6 +677,7 @@ class StorageService {
     list = list.filter((c) => c.id !== id);
     localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(list));
     this.notify();
+    this.pushToServerBackup();
 
     if (isSupabaseConfigured() && supabase) {
       supabase.from('clientes').delete().eq('id', id).then(() => {});
@@ -705,6 +797,7 @@ class StorageService {
 
     // Sync to Supabase
     this.syncCotizacionToSupabase(cot);
+    this.pushToServerBackup();
   }
 
   public createCotizacionFromPublicForm(
@@ -812,6 +905,7 @@ class StorageService {
 
     // Sync to Supabase
     this.syncCitaToSupabase(cita);
+    this.pushToServerBackup();
   }
 
   public deleteCita(id: string): void {
@@ -819,6 +913,7 @@ class StorageService {
     list = list.filter((c) => c.id !== id);
     localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(list));
     this.notify();
+    this.pushToServerBackup();
 
     if (isSupabaseConfigured() && supabase) {
       supabase.from('citas').delete().eq('id', id).then(() => {});

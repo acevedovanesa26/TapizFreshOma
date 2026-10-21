@@ -46,21 +46,37 @@ Porque Render ejecutó únicamente la instalación (`bun install` o `npm install
 
 ---
 
-## ✉️ 2. ¿Qué colocar en BREVO_SENDER_EMAIL y BREVO_SENDER_NAME?
+## ✉️ 2. ¿Cómo solucionar el error de Brevo ("Key not found" / "unauthorized")?
 
-En tus variables de entorno o en Render:
+Si al intentar enviar un correo o en los logs de la aplicación te aparece:
+```json
+Error desde Brevo API: { "message": "Key not found", "code": "unauthorized" }
+```
 
-- **`BREVO_SENDER_EMAIL`**:  
-  Coloca: `tapizoma2026@gmail.com`  
-  *(**Importante:** En tu cuenta de Brevo, ve a **Senders & IP** y verifica que `tapizoma2026@gmail.com` esté agregado y confirmado como remitente autorizado).*
-  
-- **`BREVO_SENDER_NAME`**:  
-  Coloca: `Tapiz Fresh Bogotá`
+### ¿Por qué ocurre esto?
+En Brevo existen **dos tipos de claves diferentes**:
+1. **Claves SMTP:** Se usan únicamente para servidores de correo con usuario y contraseña.
+2. **Claves API (v3):** Son las que necesita la página web y **siempre empiezan por `xkeysib-...`**.
 
-- **`BREVO_API_KEY`**:  
-  Tu clave API que empieza por `xkeysib-...` (obtenida en Brevo → SMTP & API → API Keys).
+Si copiaste una Clave SMTP o la contraseña de tu cuenta, Brevo no la reconoce y responde con `Key not found`.
 
-> **Consejo:** Desde tu panel **/admin** → **Configuración** → **Conexión de Correo y Base de Datos**, puedes ingresar tu clave y pulsar el botón **"Probar Envío de Correo Ahora Mismo"** para verificar en 2 segundos si el correo llega a tu bandeja.
+### ¿Cómo obtener la Clave correcta en 1 minuto?
+1. Inicia sesión en tu cuenta de [Brevo (Sendinblue)](https://app.brevo.com).
+2. Haz clic en tu **nombre o perfil en la esquina superior derecha** y pulsa en **"SMTP y API"**.
+3. **Paso crucial:** Asegúrate de hacer clic en la pestaña **"Claves API"** *(NO en la pestaña "Claves SMTP")*.
+4. Haz clic en el botón azul **"Generar una nueva clave API"**.
+5. Ponle un nombre (por ejemplo: `Web Tapiz Fresh`) y haz clic en **Generar**.
+6. **Copia la clave generada.** Notarás que empieza exactamente con:
+   ```text
+   xkeysib-...
+   ```
+7. Ve a tu panel administrativo **/admin** → pestaña **"Conexión de Correo y Base de Datos"**:
+   - Pega tu clave en **Clave API de Brevo (API Key v3)**.
+   - En **Correo Remitente**, coloca el correo verificado en tu cuenta de Brevo (ej: `tapizoma2026@gmail.com`).
+   - Haz clic en el botón **"Guardar Conexión"**.
+8. Pulsa en **"Probar Envío de Correo Ahora Mismo"**: ¡Recibirás un correo de prueba inmediatamente en tu bandeja!
+
+> **Sincronización para Cualquier Dispositivo e IP:** Al guardar la clave en el panel, el servidor de Tapiz Fresh la almacena de forma compartida. Esto significa que **sin importar si un cliente entra desde un celular en la calle, desde un computador en otra red o desde cualquier dirección IP**, los correos y notificaciones se enviarán automáticamente sin fallos.
 
 ---
 
